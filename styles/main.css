@@ -85,3 +85,23 @@ header {
 .aiOcean {
   border: solid 1px lightblue;
 }
+
+.carrier {
+  background-color: red;
+}
+
+.battleship {
+  background-color: blue;
+}
+
+.destroyer {
+  background-color: black;
+}
+
+.submarine {
+  background-color: green;
+}
+
+.minesweeper {
+  background-color: orange;
+}
