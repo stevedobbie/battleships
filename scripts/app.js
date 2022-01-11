@@ -7,7 +7,7 @@ function init() {
   // Grid variables
   const columns = 10
   const cells = columns * columns // each grid is 10 x 10
-  const gridArrayPlayerTargeting = [] // array for selecting target cells for the player
+  let gridArrayPlayerTargeting = [] // array for selecting target cells for the player
   const gridArrayPlayerOcean = [] // array for position of player's vessels
   let gridArrayAiTargeting = [] // array for selecting target cells for the AI
   const gridArrayAiOcean = [] // array for position of AI's vessels
@@ -56,6 +56,8 @@ function init() {
     length: 1,
     position: [0],
   }
+
+  const targetArray = [target]
   
   // for ai and player store hitsRemaining = total length of all vessels
   const playerHitsRemaining = 5 + 4 + 3 + 3 + 2
@@ -63,17 +65,27 @@ function init() {
 
   // Mouse variables
   let mousePointer // mouse pointer cell
+  let position = 0
+
+  // start Game variable
+  const start = true
+
+  // deployment variables
+  let deploy = false
+  let index = 0 // sets the starting index
 
   // player deployment variables
-  let deploy = false
-  let index = 0 // sets the player's starting index
-  const grid = gridArrayPlayerOcean // player's ocean grid
+  let grid = gridArrayPlayerOcean // player's ocean grid
   let name = playerVessels[index].name // starting name for first vessel to be deployed ('carrier')
-  const player = playerVessels // array which stores the player's vessels
+  let player = playerVessels // array which stores the player's vessels
   let deployCounter = 0
+  let playerDeployment = false
+
+  // Ai deployment variables
+  let aiCell = 0
 
   // rotation
-  let orientation = 0 // starting position in vertical
+  let orientation = 0 // starting position in vertical, 1 is horizontal
   let rotationToggle = 0
 
   // Event variables
@@ -122,14 +134,26 @@ function init() {
   const playerOcean = document.querySelectorAll('.playerOcean') 
   //console.log(playerOcean)
 
-  // main functions
+  // MAIN FUNCTIONS
+  //gameStart()
+  
   playerDeploy()
+
+  function gameStart() {
+    playerDeploy(playerDeploymentCheck)
+    console.log('player deploy ->', playerDeployment)
+
+  }
+    
+
   
   
 
 
   //console.log(gridArrayPlayerOcean)
   //console.log(gridArrayAiOcean)
+
+  // MODULAR FUNCTIONS
 
   // generates the length of the vessel from looking up the object array
   function vesselLength (name, player) {
@@ -150,7 +174,16 @@ function init() {
   
 
   //console.log(gridArrayPlayerOcean[0])
-  
+
+  // sleep function to enable asynchronous execution
+  function sleep (milliseconds) {
+    const date = Date.now()
+    let currentDate = null
+    do {
+      currentDate = Date.now()
+    } while (currentDate - date < milliseconds)
+  }
+
   // vessel added based on vessel name passed into function
   // vessel starting position is 0 
   // vessel class is added to cells based on the vessel length 
@@ -162,24 +195,28 @@ function init() {
   // player = player or ai vessel array (e.g. playerVessels)
   function addVessel (grid, position, name, player) {
     const start = grid[position]
+    console.log(grid[position])
+    console.log(grid, position, name, player)
     const vessel = vesselPosition(name, player)
-    const bow = parseInt(start.id)
-    vessel[0] = bow // updates the vessel array with the id of the mouse pointer position
-    start.classList.add(name) // adds class to the mouse pointer position
-    start.classList.remove('sea')
     
-    //console.log(start)
-    // console.log(length)
-    // console.log(vessel)
-    // console.log('bow ->', bow)
-    // console.log(name)
-    // console.log(grid[position])
+    const bow = playerDeployment === false ? parseInt(start.id) : aiCell 
+    console.log(bow)
+    vessel[0] = bow // updates the vessel array with the id of the mouse pointer position
+    start.classList.remove('sea')
+    start.classList.add(name) // adds class to the mouse pointer position
+    
+    console.log(start)
+    console.log(length)
+    console.log(vessel)
+    console.log('bow ->', bow)
+    console.log(name)
+    console.log(grid[position])
     if (orientation === 0) {
       let nextSection = 10
       for (let i = 1; i < vessel.length; i++) {
         vessel[i] = bow + nextSection
-        grid[bow + nextSection].classList.add(name)
         grid[bow + nextSection].classList.remove('sea')
+        grid[bow + nextSection].classList.add(name)
         nextSection += columns // adds 10 on to cell for the next iteration
       }
     } 
@@ -194,8 +231,8 @@ function init() {
       for (let i = 0; i < vessel.length; i++) {
         vessel[i] = bow + nextSection
         //console.log(vessel[i])
-        grid[bow + nextSection].classList.add(name)
         grid[bow + nextSection].classList.remove('sea')
+        grid[bow + nextSection].classList.add(name)
         nextSection += 1 // adds 1 on to cell for the next iteration
       }
     }  
@@ -224,8 +261,9 @@ function init() {
       vessel[i] = vessel[i] - (i * columns) + i
     }
     for (let i = 0; i < vessel.length; i++) {
-      grid[vessel[i]].classList.add(name)
       grid[vessel[i]].classList.remove('sea')
+      grid[vessel[i]].classList.add(name)
+      
     }
     rotationToggle = 1
   }
@@ -239,20 +277,30 @@ function init() {
   // collision detection / logic to avoid breaking out the grid
   // collision detection / logic to avoid placement on previous vessels (e.g. if class of any cells != empty)
   // calls the addVessel and removeVessel functions
-  function moveVessel (event) {
-    mousePointer = event.target.id
-    let position = mousePointer
-    // console.log(grid)
-    // console.log(position)
-    // console.log(name) 
-    // console.log(player)
-    // console.log(length)
+  function moveVessel (event, aiCell) {
+    
+  
+    if (playerDeployment === false) {
+      mousePointer = event.target.id
+    } if (playerDeployment === true) {
+      mousePointer = aiCell
+      console.log(position)
+      console.log(mousePointer)
+      console.log(name) 
+      console.log(player)
+    }
+    
+    position = mousePointer
+    
+    
+    
     //console.log(maxCells)
     
     const length = vesselLength(name, player)
+    console.log(length)
     const maxCells = cells - (length - 1) * columns // max numbers to avoid scrolling off screen
     const maxWidth = columns - length
-    // const grid = gridArrayPlayerOcean
+    //console.log(length, maxCells, maxWidth)
     
     // const name = playerVessels[1].name
     // const player = playerVessels
@@ -282,11 +330,18 @@ function init() {
   // this function places the vessels on the grid
   // checks to see if the cell is already occupied by a vessel
   // deploys vessels if the current index is less than the second last index of the array and the deployment counter is set to zero 
+  // grid = player or ai grid (e.g. gridArrayPlayerOcean)
+  // position = mouse pointer cell id (e.g '46')
+  // name = name of vessel/class (e.g. 'carrier')
+  // player = player or ai vessel array (e.g. playerVessels)
   function deployVessel () {
     
+
     // logic to check if the cell already occupied by a vessel ** TO BE REFACTORED **
-    const vesselArray = playerVessels[index].position
-    //console.log(vesselArray)
+    console.log(player)
+    console.log(player[index])
+    const vesselArray = player[index].position
+    
     let classes = []
     const checkSea = []
     let invalidCell = null
@@ -300,7 +355,7 @@ function init() {
     }
 
     //console.log(checkSea)
-    const removeSelf = checkSea.filter(item => item !== playerVessels[index].name)
+    const removeSelf = checkSea.filter(item => item !== player[index].name)
     //console.log('removeSelf ->', removeSelf)
     const cellCollision = removeSelf.filter(item => item === 'carrier' || item === 'battleship' || item === 'destroyer' || item === 'submarine' || item === 'minesweeper')
     
@@ -327,34 +382,50 @@ function init() {
   
     // console.log(grid[22].classList[1])
     
-    // console.log(ch)
     // const sausage = checkSea.forEach(item => grid[item].classList)
-    // console.log(sausage)
     
-    if (index <= playerVessels.length - 2 && deployCounter === 0 && invalidCell === false) {
+    if (index <= player.length - 2 && deployCounter === 0 && invalidCell === false) {
       //console.log(playerVessels.length - 1)
       
       index += 1
+      console.log(index)
+
       //console.log(index)
-      name = playerVessels[index].name
+      name = player[index].name
       //console.log(playerVessels[index].name)
-    } else if  (index > playerVessels.length - 2 && deployCounter === 0 & invalidCell === false) {
+    } else if  (index > player.length - 2 && deployCounter === 0 & invalidCell === false) {
       // console.log(name)
       // console.log(playerVessels[index].name)
       // console.log(player)
       // console.log(playerVessels[index].position[0])
       // console.log('index ->', index)
-      addVessel(grid, playerVessels[index].position[0], playerVessels[index].name, player)  
+      addVessel(grid, player[index].position[0], player[index].name, player)
+        
       deploy = false
+      
+      // stops the deployment
       deployCounter += 1
-      gridArrayAiTargeting = grid 
-      console.log(gridArrayAiTargeting)
+      //console.log(index)
+      //console.log(deployCounter)
+
+      if (deployCounter === 1 && index === 4 && grid === gridArrayPlayerOcean) {
+        gridArrayAiTargeting = grid 
+        //console.log(gridArrayAiTargeting)
+        playerDeployment = true
+        
+        console.log(playerDeployment)
+      }
+      if (deployCounter === 1 && index === 4 && grid === gridArrayAiOcean) {
+        gridArrayPlayerTargeting = grid 
+        //console.log(gridArrayPlayerTargeting)
+      }
     }
+    playerDeploymentCheck()
   }
   
   function rotateToggle () {
     orientation === 0 ? orientation += 1 : orientation -= 1
-    console.log(orientation)
+    //console.log(orientation)
     // const vessel = vesselPosition(name, player)
     // for (let i = 0; i < vessel.length; i++) {
     //   toggle = grid[vessel[i]].classList.toggle('horizontal')
@@ -369,19 +440,69 @@ function init() {
     removeVessel(name)
     deploy = true
   }
-  
-  
 
+  function playerDeploymentCheck() {
+    if (playerDeployment === true) {
+      aiDeploy()
+    }
+  }
 
-  //function aiDeploy
+  // select a random cell for the ai vessel
+  function randomCell () {
+    aiCell = Math.floor(Math.random() * cells)
+  }
+
+  // select a random orientation for the ai vessel
+  function randomOrientation () {
+    orientation = Math.floor(Math.random() * 2)
+  }
+  
+  // remove event listeners (to be added back at the end of the ai's turn)
+  function removeEventListeners () {
+    playerOcean.forEach(div => div.removeEventListener('mouseenter', moveVessel))
+    playerOcean.forEach(div => div.removeEventListener('click', deployVessel))
+    rotateButton.removeEventListener('click', rotateToggle)
+  }
+  
   // uses the moveVessel function to place the ai vessels on empty cells on the ai's oceanGrid 
-  // randomly select a vessel, orientation and starting cell
+  // randomly select an orientation and starting cell
   // select again if there is a collision
   // remove vessels which have been added successfully from the array
   // loop through until all the vessels are added
+  function aiDeploy () {
+    index = 0 // reset the vessel index
+    grid = gridArrayAiOcean // ai's ocean grid
+    name = aiVessels[index].name // starting name for first vessel to be deployed ('carrier')
+    player = aiVessels // array which stores the ai's vessels
+    let deployCounter = 0
+    
+    removeEventListeners()
+
+    randomOrientation()
+    console.log(orientation)
+
+    randomCell()
+    console.log(aiCell)
+
+    
+
+    // *** ADD AT cell 0 
+    // then rotate
+    // then move vessel to random point
+    // then deploy
+    // maybe create some code to select the random point (accounting for ) 
+    position = 0
+
+    addVessel(grid, position, name, player)
+    rotateVessel(orientation)
+    position = aiCell
+    moveVessel(event, aiCell)
+  }
   
+  
+
   //function targetSelection (event)
-  // target can be selected using space or enter [or on-screen buttons]
+  // target can be selected using mouse 
   // confirm target selection (y/n)
   
   //function playerAttack ()
