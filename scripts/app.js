@@ -102,6 +102,7 @@ function init() {
   let aiCell = 0
   let aiDeployment = false
   let collision = [] // this is also used to check if there's a hit
+  let playerCollision = []
 
   // target variables
   let targetGrid
@@ -110,6 +111,8 @@ function init() {
   let aiTargetCells = [] // cells to target after filtering for hits and misses
   const aiCellsToExclude = [] // this will store the cells which have been hit or missed
   let killMode = false 
+  const killArray = []
+  const aiPreviousTargets = []
 
   // rotation
   let orientation = 0 // starting position in vertical, 1 is horizontal
@@ -601,7 +604,7 @@ function init() {
     //   aiVessels[index].position.pop()
     //   console.log(aiVessels[index].position)
     // }
-    console.log(playerVessels[0])
+    //console.log(playerVessels[0])
 
     for (let j = 0; j < player.length; j++){
       grid = gridArrayAiOcean
@@ -710,7 +713,7 @@ function init() {
     collision = carrierArray.concat(battleshipArray, destroyerArray, submarineArray, minesweeperArray)
     const checkCollision = collision.some((item, i) => collision.indexOf(item) !== i)
     //console.log(collision)
-    console.log(checkCollision)
+    //console.log(checkCollision)
 
     if (checkCollision === true) {
       aiErrorHandling()
@@ -861,8 +864,10 @@ function init() {
 
     playerTargetResult.push(outcome)
     
-    console.log(hitAiVessel)
-    console.log(playerTargetResult)
+    // *** PLAYER STATS ***
+    // console.log(hitAiVessel)
+    console.log('*** PLAYER STATS ***')
+    console.log('outcome -->', playerTargetResult)
 
     // add back listeners
     addBackEventListeners()
@@ -870,6 +875,8 @@ function init() {
     // increment turn counters
     playerTurn += 1
     turnToggle += 1
+    
+    console.log('player turn toggle -->', turnToggle)
     turnCheck()
   
   }
@@ -880,18 +887,17 @@ function init() {
     console.log(aiTurn)
 
     if (turnToggle === 0) {
+      addBackEventListeners()
       targetSelection()
     }
     if (turnToggle === 1) {
+      removeEventListeners()
       aiAttack()
     }
   }
 
 
 
-  function checkOrientation () {
-
-  }
 
 
 
@@ -906,10 +912,10 @@ function init() {
 
     console.log(killMode)
     
-    if (killMode === false) {
+    if (killMode === false && turnToggle === 1) {
       aiHunt()
     }
-    if (killMode === true) {
+    if (killMode === true && killArray.length > 0 && turnToggle === 1) {
       aiKill()
     }
     
@@ -932,8 +938,8 @@ function init() {
       aiSelectionArray.push(i)
     }
     // console.log(aiSelectionArray)
-
-    console.log(aiCellsToExclude.length)
+    console.log(aiCellsToExclude)
+    // console.log(aiCellsToExclude.length)
     if (aiCellsToExclude.length > 0) {
       for (let i = 0; i < aiCellsToExclude.length; i++) {
         aiTargetCells = aiSelectionArray.filter(item => item !== aiCellsToExclude[i])
@@ -943,7 +949,7 @@ function init() {
     } else {
       aiTargetCells = aiSelectionArray
     }
-    //console.log(aiTargetCells)
+    
 
     // ** TO BE ADDED LATER
     // add sunk function to check if any ships have been sunk
@@ -959,7 +965,7 @@ function init() {
   // increment sunk variable from 0 to 1
   
   function sunk () {
-
+    // reset kill array = []
   }
   
    
@@ -1014,62 +1020,15 @@ function init() {
     }
     
 
-    console.log(playerVessels)
-    console.log(aiVessels)
+    // console.log(playerVessels)
+    // console.log(aiVessels)
 
     // generate collision array with player positions
-    const playerCollision = deployedCarrier.concat(deployedBattleship, deployedDestroyer, deployedSub, deployedMine)
-    console.log(playerCollision)
-    console.log(collision)
+    playerCollision = deployedCarrier.concat(deployedBattleship, deployedDestroyer, deployedSub, deployedMine)
+    // console.log(playerCollision)
+    // console.log(collision)
 
-    // check hit or miss
-    const result = playerCollision.some(item => item === targetCell)
-    //console.log(result)
-
-    let outcome 
-    
-    if (result === true) {
-      killMode = true
-      console.log(killMode)
-      outcome = 'hit'
-      playerHitsRemaining -= 1
-      //console.log(outcome)
-      console.log(playerHitsRemaining)
-      targetDiv.classList.remove('sea')
-      targetDiv.classList.add('hit')
-
-      // check which vessel hit (not to be used by ai until vessel is sunk)
-      if (deployedCarrier.some(item => item === targetCell) === true) {
-        playerCarrierHits -= 1
-        hitPlayerVessel = 'carrier'
-      }
-      if (deployedBattleship.some(item => item === targetCell) === true) {
-        playerBattleHits -= 1
-        hitPlayerVessel = 'battleship'
-      }
-      if (deployedDestroyer.some(item => item === targetCell) === true) {
-        playerDestroyHits -= 1
-        hitPlayerVessel = 'destroyer'
-      }
-      if (deployedSub.some(item => item === targetCell) === true) {
-        playerSubHits -= 1
-        hitPlayerVessel = 'submarine'
-      }
-      if (deployedMine.some(item => item === targetCell) === true) {
-        playerMineHits -= 1
-        hitPlayerVessel = 'minesweeper'
-      }
-    } else {
-      outcome = 'miss'
-      console.log(outcome)
-      targetDiv.classList.remove('sea')
-      targetDiv.classList.add('miss')
-    }
-    console.log(hitPlayerVessel)
-
-    aiTargetResult.push(outcome)
-    
-    console.log(aiTargetResult)
+    hitCheck(targetCell, targetDiv)
 
     // increment turn counters
     aiTurn += 1
@@ -1079,21 +1038,144 @@ function init() {
     aiCellsToExclude.push(targetCell)
     //console.log(aiCellsToExclude)
 
-
-
-
+    console.log('ai hunt toggle -->', turnToggle)
     turnCheck()
   }
 
+  // this function validates the hit
+  // target = the cell number to be targeted
+  // element = div to be targeted
+  function hitCheck (target, element) {
+    // check hit or miss
+    const result = playerCollision.some(item => item === target)
+    //console.log(result)
 
-  //function aiKill ()
+    let outcome 
+    aiPreviousTargets.push(target)
+
+    if (result === true) {
+      killMode = true
+      killArray.push(target)
+      
+      console.log(killArray)
+      console.log(killMode)
+      outcome = 'hit'
+      playerHitsRemaining -= 1
+      //console.log(outcome)
+      
+      element.classList.remove('sea')
+      element.classList.add('hit')
+
+      // check which vessel hit (not to be used by ai until vessel is sunk)
+      if (deployedCarrier.some(item => item === target) === true) {
+        playerCarrierHits -= 1
+        hitPlayerVessel = 'carrier'
+      }
+      if (deployedBattleship.some(item => item === target) === true) {
+        playerBattleHits -= 1
+        hitPlayerVessel = 'battleship'
+      }
+      if (deployedDestroyer.some(item => item === target) === true) {
+        playerDestroyHits -= 1
+        hitPlayerVessel = 'destroyer'
+      }
+      if (deployedSub.some(item => item === target) === true) {
+        playerSubHits -= 1
+        hitPlayerVessel = 'submarine'
+      }
+      if (deployedMine.some(item => item === target) === true) {
+        playerMineHits -= 1
+        hitPlayerVessel = 'minesweeper'
+      }
+    } else {
+      outcome = 'miss'
+      // console.log(outcome)
+      element.classList.remove('sea')
+      element.classList.add('miss')
+    }
+    // console.log(hitPlayerVessel)
+
+    aiTargetResult.push(outcome)
+    
+    // console.log(aiTargetResult)
+
+    // *** AI STATS ***
+    console.log('*** AI STATS ***')
+    console.log('outcome -->', aiTargetResult)
+    console.log('previous targets -->', aiPreviousTargets)
+    console.log('player hits remaining -->', playerHitsRemaining)
+    console.log('cells to exclude -->', aiCellsToExclude)
+    console.log('potential ai targets -->', aiTargetCells)
+    console.log('killmode -->', killMode)
+    
+
+  }
+  
   // select random adjacent cell based on hitCell array
   // if only 1 array value then randomly select an adjacent cell (i.e. 1 up, 1 down, 1 left or 1 right)
   // if 2 values in array check whether they are aligned vertically or horizontally and choose cell accordingly 
   // could be 1 before the first or last cell in the hitCell array
   // if last aiShots was 'miss' try again based on whether there is one or 2 values in the array (as above)
   // call sunk()
+  function aiKill () {
+    
+    // this runs only if one cell has been hit previously
+    if (killArray.length === 1) {
+      
+      // options are +1, -1, +10, -10 around cell
+      const targetArray = [+1, -1, +10, -10]
+
+      // find the last cell
+      const previousTarget = killArray[killArray.length - 1]
+
+      // random cell 
+      const newTarget = previousTarget + targetArray[Math.floor(Math.random() * targetArray.length)]
+
+      // target element
+      const targetDiv = gridArrayAiTargeting[newTarget]
+      // console.log(previousTarget)
+      // console.log(newTarget)
+
+      hitCheck(newTarget, targetDiv)
+      
+      // this will be used for the ai's targeting - pushes in previous hits & misses
+      aiCellsToExclude.push(newTarget)
+      //console.log(aiCellsToExclude)
+    } 
+    if (killArray.length > 1) {
+
+      // determine orientation, if last value is +1 from previous value then horizontal
+      const previousTarget = killArray[killArray.length - 1]
+      const previousX2Target = killArray[killArray.length - 2]
+    
+      let targetArray = []
+
+      if (Math.abs(previousTarget - previousX2Target) === 1) {
+        targetArray = [+1, -1]
+      } 
+      if (Math.abs(previousTarget - previousX2Target) === 10) {
+        targetArray = [+10, -10]
+      }
+      // if horizontal, new target is smallest value -1 or largest value +1 in kill array
+      // if vertical, new target is either smalles value -10 or largest value +10 
+      
+      // order array lowest to highest
+      const orderedKillArray = killArray.sort((a, b) => a - b)
+      console.log(orderedKillArray)
+
+      // random cell 
+      const newTarget = previousTarget + targetArray[Math.floor(Math.random() * targetArray.length)]
+
+    }
+
+    // increment turn counters
+    aiTurn += 1
+    turnToggle -= 1
   
+    console.log('ai kill toggle -->', turnToggle)
+
+    turnCheck()
+  }
   
   
   //function endGame ()
