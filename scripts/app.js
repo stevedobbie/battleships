@@ -450,6 +450,10 @@ function init() {
     }
   }
 
+  function aiErrorHandling() {
+    aiDeploy()
+  }
+
   // select a random, valid cell for the ai vessel
   function randomCell () {
     const length = vesselLength(name, player)
@@ -581,7 +585,6 @@ function init() {
       console.log('after randomisation ->', vessel[0])
     
       // create the new arrays
-      // console.log(vessel.length)
       let item = position
       if (orientation === 0) {
         for (let i = 0; i < vessel.length; i++) {
@@ -597,23 +600,37 @@ function init() {
       }
       
       console.log(vessel)
-
-      // collision detection - loop until no collisions
-      collisions = 
-
-      // remove all classes
-
-      // add classes depending on orientation
-
-      // // check to see if there are cell collisions
-      // if (i > 0) {
-      //   const ship1 =
-      // }
-
       index += 1
     }
+    
+    // collision detection - loop until no collisions
+    const carrierArray = aiVessels[0].position
+    const battleshipArray = aiVessels[1].position
+    const destroyerArray = aiVessels[2].position
+    const submarineArray = aiVessels[3].position
+    const minesweeperArray = aiVessels[4].position
 
+    const collision = carrierArray.concat(battleshipArray, destroyerArray, submarineArray, minesweeperArray)
+    const checkCollision = collision.some((item, i) => collision.indexOf(item) !== i)
+    console.log(collision)
+    console.log(checkCollision)
 
+    if (checkCollision === true) {
+      aiErrorHandling()
+    }
+
+    // remove all classes
+    // needs to target only aiOceanGrid
+    const aiOceanClasses = document.querySelectorAll('.aiOcean')
+    aiOceanClasses.forEach(div => div.classList.remove('carrier'))
+    aiOceanClasses.forEach(div => div.classList.remove('battleship'))
+    aiOceanClasses.forEach(div => div.classList.remove('destroyer'))
+    aiOceanClasses.forEach(div => div.classList.remove('submarine'))
+    aiOceanClasses.forEach(div => div.classList.remove('minesweeper'))
+    aiOceanClasses.forEach(div => div.classList.add('sea'))
+
+    // add classes using the object array
+    console.log(aiVessels[0].position)
 
   }
   
