@@ -60,8 +60,20 @@ function init() {
   const targetArray = [targetDiv]
   
   // for ai and player store hitsRemaining = total length of all vessels
-  const playerHitsRemaining = 5 + 4 + 3 + 3 + 2
-  const aiHitsRemaining = 5 + 4 + 3 + 3 + 2
+  let playerHitsRemaining = 5 + 4 + 3 + 3 + 2
+  let aiHitsRemaining = 5 + 4 + 3 + 3 + 2
+  let playerVesselsRemaining = 5
+  let aiVesselsRemaining = 5
+  let playerCarrierHits = 5
+  let playerBattleHits = 4
+  let playerDestroyHits = 3
+  let playerSubHits = 3
+  let playerMineHits = 2
+  let aiCarrierHits = 5
+  let aiBattleHits = 4
+  let aiDestroyHits = 3
+  let aiSubHits = 3
+  let aiMineHits = 2
 
   // Mouse variables
   let mousePointer // mouse pointer cell
@@ -750,6 +762,7 @@ function init() {
     //console.log(name)
     
     addBackEventListeners()
+    //console.log(event.target)
     
     addTarget(targetGrid, position, name)
     
@@ -851,13 +864,21 @@ function init() {
     console.log(hitAiVessel)
     console.log(playerTargetResult)
 
+    // add back listeners
+    addBackEventListeners()
+
     // increment turn counters
     playerTurn += 1
     turnToggle += 1
     turnCheck()
+  
   }
   
   function turnCheck () {
+    
+    console.log(playerTurn)
+    console.log(aiTurn)
+
     if (turnToggle === 0) {
       targetSelection()
     }
@@ -866,17 +887,31 @@ function init() {
     }
   }
 
+
+
+  function checkOrientation () {
+
+  }
+
+
+
+
   // logic for determine whether ai should hunt or kill
   // if sunk variable = 1, reset kill and sunk variables to 0
   // if kill variable = 1 execute aiKill() 
   // otherwise execute aiHunt()
   function aiAttack () {
 
-    // setup ai variables
-
     huntGrid()
+
+    console.log(killMode)
     
-    aiHunt()
+    if (killMode === false) {
+      aiHunt()
+    }
+    if (killMode === true) {
+      aiKill()
+    }
     
 
 
@@ -942,10 +977,12 @@ function init() {
 
 
   function aiHunt () {
-    // select a random cell from aiTargetCells
-    //const targetCell = Math.floor(Math.random() * aiTargetCells.length)
     
-    const targetCell = 0
+    // select a random cell from aiTargetCells
+    const targetCell = Math.floor(Math.random() * aiTargetCells.length)
+    
+    // *** TO BE CHANGED TO RUN THE GAME 
+    // const targetCell = 0
     // console.log(aiTargetCells)
     // console.log(targetCell)
 
@@ -961,37 +998,29 @@ function init() {
     const mine = document.querySelectorAll('.playerOcean.minesweeper') 
     
     for (let i = 0; i < carrier.length; i++) {
-      deployedCarrier.push(carrier[i].id)
+      deployedCarrier.push(parseInt(carrier[i].id))
     }
     for (let i = 0; i < battle.length; i++) {
-      deployedBattleship.push(battle[i].id)
+      deployedBattleship.push(parseInt(battle[i].id))
     }
     for (let i = 0; i < destroyer.length; i++) {
-      deployedDestroyer.push(destroyer[i].id)
+      deployedDestroyer.push(parseInt(destroyer[i].id))
     }
     for (let i = 0; i < sub.length; i++) {
-      deployedSub.push(sub[i].id)
+      deployedSub.push(parseInt(sub[i].id))
     }
     for (let i = 0; i < mine.length; i++) {
-      deployedMine.push(mine[i].id)
+      deployedMine.push(parseInt(mine[i].id))
     }
     
 
-    playerVessels[0].position = deployedCarrier
-    console.log(playerVessels[0].position)
     console.log(playerVessels)
     console.log(aiVessels)
-  
-    // 
-    // removeClass.forEach(div => div.classList.remove(name))
-    // removeClass.forEach(div => div.classList.add('sea'))
 
     // generate collision array with player positions
-    const playerCollision = playerVessels[0].position.concat(playerVessels[1].position,playerVessels[2].position,playerVessels[3].position, playerVessels[4].position)
-    //console.log('ai carrier array', aiVessels[0])
-    //console.log(playerVessels[0])
-    //console.log('player carrier array ->', sausage[0])
-    //console.log(playerCollision)
+    const playerCollision = deployedCarrier.concat(deployedBattleship, deployedDestroyer, deployedSub, deployedMine)
+    console.log(playerCollision)
+    console.log(collision)
 
     // check hit or miss
     const result = playerCollision.some(item => item === targetCell)
@@ -1000,21 +1029,35 @@ function init() {
     let outcome 
     
     if (result === true) {
-      killMode === true
+      killMode = true
+      console.log(killMode)
       outcome = 'hit'
+      playerHitsRemaining -= 1
       //console.log(outcome)
+      console.log(playerHitsRemaining)
       targetDiv.classList.remove('sea')
       targetDiv.classList.add('hit')
 
       // check which vessel hit (not to be used by ai until vessel is sunk)
-      //console.log(targetDiv)
-      //console.log(playerVessels.length)
-      for (let j = 0; j < playerVessels.length; j++) {
-        for (let i = 0; i < playerVessels[j].position.length; i++) {
-          if (targetDiv === playerVessels[j].position[i]) {
-            hitPlayerVessel = playerVessels[j].name
-          }
-        }
+      if (deployedCarrier.some(item => item === targetCell) === true) {
+        playerCarrierHits -= 1
+        hitPlayerVessel = 'carrier'
+      }
+      if (deployedBattleship.some(item => item === targetCell) === true) {
+        playerBattleHits -= 1
+        hitPlayerVessel = 'battleship'
+      }
+      if (deployedDestroyer.some(item => item === targetCell) === true) {
+        playerDestroyHits -= 1
+        hitPlayerVessel = 'destroyer'
+      }
+      if (deployedSub.some(item => item === targetCell) === true) {
+        playerSubHits -= 1
+        hitPlayerVessel = 'submarine'
+      }
+      if (deployedMine.some(item => item === targetCell) === true) {
+        playerMineHits -= 1
+        hitPlayerVessel = 'minesweeper'
       }
     } else {
       outcome = 'miss'
@@ -1026,18 +1069,20 @@ function init() {
 
     aiTargetResult.push(outcome)
     
-    console.log(hitPlayerVessel)
     console.log(aiTargetResult)
 
     // increment turn counters
     aiTurn += 1
-    turnToggle += 1
-
-    // apply logic from player attack to determine if hit or miss
+    turnToggle -= 1
     
     // this will be used for the ai's targeting - pushes in previous hits & misses
     aiCellsToExclude.push(targetCell)
     //console.log(aiCellsToExclude)
+
+
+
+
+    turnCheck()
   }
 
 
