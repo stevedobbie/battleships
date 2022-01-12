@@ -169,6 +169,7 @@ function init() {
   // name is the name of the vessel
   //player is the name of the player or ai vessel array
   function vesselPosition (name, player) {
+    //console.log(player)
     return player.filter(vessel => vessel.name === name)[0].position
   }
   
@@ -195,22 +196,23 @@ function init() {
   // player = player or ai vessel array (e.g. playerVessels)
   function addVessel (grid, position, name, player) {
     const start = grid[position]
-    console.log(grid[position])
-    console.log(grid, position, name, player)
+    //console.log(grid[position])
+    //console.log(grid[position], position, name, player)
     const vessel = vesselPosition(name, player)
+    //console.log(vessel)
     
-    const bow = playerDeployment === false ? parseInt(start.id) : aiCell 
-    console.log(bow)
+    const bow = playerDeployment === false ? parseInt(start.id) : position 
+    // console.log(bow)
     vessel[0] = bow // updates the vessel array with the id of the mouse pointer position
     start.classList.remove('sea')
     start.classList.add(name) // adds class to the mouse pointer position
     
-    console.log(start)
-    console.log(length)
-    console.log(vessel)
-    console.log('bow ->', bow)
-    console.log(name)
-    console.log(grid[position])
+    // console.log(start)
+    // console.log(length)
+    // console.log(vessel)
+    // console.log('bow ->', bow)
+    // console.log(name)
+    // console.log(grid[position])
     if (orientation === 0) {
       let nextSection = 10
       for (let i = 1; i < vessel.length; i++) {
@@ -256,9 +258,10 @@ function init() {
   // function which can be called to rotate the vessel
   function rotateVessel (name, player) {
     const vessel = vesselPosition(name, player)
-    //console.log(vessel)
+    
     for (let i = 1; i < vessel.length; i++) {
       vessel[i] = vessel[i] - (i * columns) + i
+      //console.log(vessel)
     }
     for (let i = 0; i < vessel.length; i++) {
       grid[vessel[i]].classList.remove('sea')
@@ -297,7 +300,7 @@ function init() {
     //console.log(maxCells)
     
     const length = vesselLength(name, player)
-    console.log(length)
+    //console.log(length)
     const maxCells = cells - (length - 1) * columns // max numbers to avoid scrolling off screen
     const maxWidth = columns - length
     //console.log(length, maxCells, maxWidth)
@@ -338,8 +341,8 @@ function init() {
     
 
     // logic to check if the cell already occupied by a vessel ** TO BE REFACTORED **
-    console.log(player)
-    console.log(player[index])
+    //console.log(player)
+    //console.log(player[index])
     const vesselArray = player[index].position
     
     let classes = []
@@ -388,7 +391,7 @@ function init() {
       //console.log(playerVessels.length - 1)
       
       index += 1
-      console.log(index)
+      //console.log(index)
 
       //console.log(index)
       name = player[index].name
@@ -413,7 +416,7 @@ function init() {
         //console.log(gridArrayAiTargeting)
         playerDeployment = true
         
-        console.log(playerDeployment)
+        //console.log(playerDeployment)
       }
       if (deployCounter === 1 && index === 4 && grid === gridArrayAiOcean) {
         gridArrayPlayerTargeting = grid 
@@ -447,10 +450,31 @@ function init() {
     }
   }
 
-  // select a random cell for the ai vessel
+  // select a random, valid cell for the ai vessel
   function randomCell () {
-    aiCell = Math.floor(Math.random() * cells)
+    const length = vesselLength(name, player)
+    const maxCells = cells - (length - 1) * columns // max numbers to avoid scrolling off screen
+    const maxWidth = columns - length
+    const validCells = []
+    // console.log(name)
+    // console.log(maxWidth)
+    // console.log(length)
+
+    for (let i = 0; i < maxCells; i++) {
+      if (i % columns <= maxWidth && i < maxCells) {
+        validCells.push(i)
+      }
+    }
+    //console.log(validCells)
+
+    const randomIndex = Math.floor(Math.random() * validCells.length)
+    aiCell = validCells[randomIndex]
+    //console.log(aiCell)
+    
   }
+    
+  
+
 
   // select a random orientation for the ai vessel
   function randomOrientation () {
@@ -472,31 +496,125 @@ function init() {
   function aiDeploy () {
     index = 0 // reset the vessel index
     grid = gridArrayAiOcean // ai's ocean grid
-    name = aiVessels[index].name // starting name for first vessel to be deployed ('carrier')
+    
     player = aiVessels // array which stores the ai's vessels
-    let deployCounter = 0
+    deployCounter = 0
+    
     
     removeEventListeners()
 
-    randomOrientation()
-    console.log(orientation)
-
-    randomCell()
-    console.log(aiCell)
-
     
 
-    // *** ADD AT cell 0 
-    // then rotate
-    // then move vessel to random point
-    // then deploy
-    // maybe create some code to select the random point (accounting for ) 
-    position = 0
+    // pops all the position arrays
+    // for (let i = 0; i < aiVessels[index].position.length; i++) {
+    //   aiVessels[index].position.pop()
+    //   console.log(aiVessels[index].position)
+    // }
 
-    addVessel(grid, position, name, player)
-    rotateVessel(orientation)
-    position = aiCell
-    moveVessel(event, aiCell)
+    for (let j = 0; j < player.length; j++){
+      
+      name = aiVessels[index].name // starting name for first vessel to be deployed ('carrier')
+      const vessel = vesselPosition(name, player)
+      let position = 0
+      
+      
+      
+      
+      // console.log(player.length)
+      // console.log(aiCell)
+      // console.log(position)
+      // console.log(aiVessels[index])
+      // console.log(aiVessels[index].position)
+      // console.log(vessel)
+      
+
+      //aiVessels[index].position
+
+      //aiVessels[index]
+
+      // remove vessel
+      // removeVessel(name)
+
+      // add vessel at cell 0
+      addVessel(grid, position, name, player)
+
+      
+      
+      // then rotate
+      randomOrientation()
+      //console.log(orientation)
+      //console.log(vessel)
+
+      console.log('vessel ->', name)
+      console.log('position ->', position)
+      console.log('orientation', orientation)
+      console.log('before rotation ->', vessel)
+      console.log('before rotation ->', aiVessels[index].position)
+      
+      const row = Math.floor(position / columns)
+      console.log(row)
+
+      // rotation
+      if (orientation === 1 && row !== 0) {
+        // for (let i = 0; i < vessel.length; i++) {
+        //   grid[vessel[i]].classList.remove(name)
+        //   grid[vessel[i]].classList.add('sea')
+        // }
+        for (let i = 1; i < vessel.length; i++) {
+          vessel[i] = vessel[i] - (i * columns) + i
+          console.log(vessel[i])
+        }
+        // for (let i = 0; i < vessel.length; i++) {
+        //   grid[vessel[i]].classList.remove('sea')
+        //   grid[vessel[i]].classList.add(name)
+        // }
+      }
+      
+      vessel[0] = position
+      console.log('after rotation ->', vessel[0])
+      
+      // move to a random cell
+      randomCell()
+      position = aiCell
+
+      vessel[0] = position
+      console.log('after randomisation ->', vessel[0])
+    
+      // create the new arrays
+      // console.log(vessel.length)
+      let item = position
+      if (orientation === 0) {
+        for (let i = 0; i < vessel.length; i++) {
+          vessel[i] = item
+          item += 10
+        }
+      }
+      if (orientation === 1) {
+        for (let i = 0; i < vessel.length; i++) {
+          vessel[i] = item
+          item += 1
+        }   
+      }
+      
+      console.log(vessel)
+
+      // collision detection - loop until no collisions
+      collisions = 
+
+      // remove all classes
+
+      // add classes depending on orientation
+
+      // // check to see if there are cell collisions
+      // if (i > 0) {
+      //   const ship1 =
+      // }
+
+      index += 1
+    }
+
+
+
   }
   
   
