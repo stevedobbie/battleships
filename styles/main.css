@@ -109,6 +109,18 @@ header {
   background-color: orange;
 }
 
+.target {
+  background-color: grey;
+}
+
+.miss {
+  background-color: gainsboro;
+}
+
+.hit {
+  background-color: orange;
+}
+
 #rotate {
   height: 50px;
   width: 100px;
