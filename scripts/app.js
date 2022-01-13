@@ -115,6 +115,8 @@ function init() {
   const killArray = []
   const aiPreviousTargets = []
   let killOrientation
+  let aiTargetArray = []
+  let newTarget
 
   // rotation
   let orientation = 0 // starting position in vertical, 1 is horizontal
@@ -1186,26 +1188,27 @@ function init() {
   // call sunk()
   function aiKill () {
     
-    
 
-
-    // this runs only if one cell has been hit previously
-    if (killArray.length === 1) {
+    // *** KILL STAGE 1 (1 hit) ***
+    // Scenario 1: kill array has 1 item and last shot is hit, pick from 4 targets in targetArray
+    if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
       
-      // options are +1, -1, +10, -10 around cell
-      const targetArray = [+1, -1, +10, -10]
-
       // find the last cell with a hit
-      const previousTarget = killArray[killArray.length - 1]
+      const previousHit = killArray[killArray.length - 1]
 
-      // random cell 
-      const newTarget = previousTarget + targetArray[Math.floor(Math.random() * targetArray.length)]
+      // options are +1, -1, +10, -10 around cell
+      aiTargetArray = [previousHit + 1, previousHit - 1, previousHit + 10, previousHit - 10]
 
-      // check cell is not in shots array, loop recursively if it is
+      // random index
+      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+      
+      // new Target
+      newTarget = aiTargetArray[randomIndex]
+
+      // validation - check cell is not in shots array, loop recursively if it is
       const restart = shotsArray.some(item => item === newTarget)
-      console.log('restart 1 -->', restart)
+      console.log('restart KILLS STAGE 1 -->', restart)
 
-      // validation
       if (restart === true || newTarget > cells - 1 || newTarget < 0) {
         aiKill()
       }
@@ -1219,37 +1222,20 @@ function init() {
 
       hitCheck(newTarget, targetDiv)
       
-      // this will be used for the ai's targeting - pushes in previous hits & misses
-      aiCellsToExclude.push(newTarget)
-      //console.log(aiCellsToExclude)
-
-      // increment turn counters
-      aiTurn += 1
-      turnToggle -= 1
       
-      // *** AI STATS ***
-      console.log('*** AI STATS ***')
-      console.log('outcome -->', aiTargetResult)
-      console.log('previous targets -->', aiPreviousTargets)
-      console.log('player hits remaining -->', playerHitsRemaining)
-      console.log('cells to exclude -->', aiCellsToExclude)
-      console.log('potential ai targets -->', aiTargetCells)
-      console.log('killmode -->', killMode)
-      console.log('ai hunt toggle -->', turnToggle)
-      console.log('aiTurn #', aiTurn)
-      console.log('shot array -->', shotsArray)
-      console.log('kill array -->', killArray) 
-
-      turnCheck()
     } 
     
-    // scenarios...
-    // scenario 1 (hit, hit): determine orientation once 2 hits, randomly pick side
-    // scenario 2a (hit, hit, hit): continue on, randomly pick side
-    // scenario 2b (hit, hit, miss): pick other side - work out orientation between miss and first hit
-    // catch all: if 2 misses in a row move back to hunt
+    // Scenario 2: kill array has 1 item and last shot is miss, filter last shot and pick from next 3 targets in targetArray, etc
+    if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
+      
+      // filter last shot from aiTargetArray
+      
+
+    }
+
+
     
-    if (killArray.length === 2) {
+    if (killArray.length === 2 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
 
       // determine orientation, if last value in kill array is +1 or -1 from previous value then horizontal
       const previousTarget = killArray[shotsArray.length - 1]
@@ -1341,18 +1327,31 @@ function init() {
       turnCheck()
     }
 
-    // check if sunk
+    // this will be used for the ai's targeting - pushes in previous hits & misses
+    aiCellsToExclude.push(newTarget)
+    //console.log(aiCellsToExclude)
 
-    // if sunk - turn kill mode off
-
-
+    // increment turn counters
+    aiTurn += 1
+    turnToggle -= 1
     
-  
-    // console.log('ai kill toggle -->', turnToggle)
+    // *** AI STATS ***
+    console.log('*** AI STATS ***')
+    console.log('outcome -->', aiTargetResult)
+    console.log('previous targets -->', aiPreviousTargets)
+    console.log('player hits remaining -->', playerHitsRemaining)
+    console.log('cells to exclude -->', aiCellsToExclude)
+    console.log('potential ai targets -->', aiTargetCells)
+    console.log('killmode -->', killMode)
+    console.log('ai hunt toggle -->', turnToggle)
+    console.log('aiTurn #', aiTurn)
+    console.log('shot array -->', shotsArray)
+    console.log('kill array -->', killArray) 
+    console.log('target array -->', aiTargetArray)
+    console.log('new target -->', newTarget)
 
-
-
-
+    turnCheck()
+    
     
   }
   
