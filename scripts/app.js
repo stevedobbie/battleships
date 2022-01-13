@@ -74,6 +74,12 @@ function init() {
   let aiDestroyHits = 3
   let aiSubHits = 3
   let aiMineHits = 2
+  let sunkPlayerVessel
+  let carrierSunk = 0
+  let battleSunk = 0
+  let destroySunk = 0
+  let subSunk = 0
+  let mineSunk = 0
 
   // Mouse variables
   let mousePointer // mouse pointer cell
@@ -111,12 +117,19 @@ function init() {
   let aiTargetCells = [] // cells to target after filtering for hits and misses
   const aiCellsToExclude = [] // this will store the cells which have been hit or missed
   let killMode = false 
-  const shotsArray = []
+  let shotsArray = []
   let killArray = []
   const aiPreviousTargets = []
   let killOrientation
   let aiTargetArray = []
   let newTarget
+
+  let scn1Counter = 0
+  let scn2Counter = 0
+  let scn3Counter = 0
+  let scn4Counter = 0
+  let scn5Counter = 0
+  let valCounter = 0
 
   // rotation
   let orientation = 0 // starting position in vertical, 1 is horizontal
@@ -1001,22 +1014,12 @@ function init() {
     }
     
 
-    // ** TO BE ADDED LATER
-    // add sunk function to check if any ships have been sunk
-    // logic to take advantage of ship length
-    // find smallest ai vessel and filter out cells from the target array
+    
 
   }
 
   
-  // after playerAttack and aiKill checks whether the vessel is sunk
-  // i.e. counts the cells for each vessel class on the ai/player oceanGrid 
-  // if count for any vessel is zero then display message `This ${vessel.name} has been sunk`
-  // increment sunk variable from 0 to 1
   
-  function sunk () {
-    // reset kill array = []
-  }
   
    
   // uses huntGrid array to randomly selected a cell to target
@@ -1101,14 +1104,28 @@ function init() {
 
     // *** AI STATS ***
     console.log('*** AI STATS ***')
+    
+    console.log('*** at start of turn ***')
+    console.log('shot array -->', shotsArray)
+    console.log('kill array -->', killArray) 
+    console.log('target array -->', aiTargetArray)
+
+    console.log('*** at the end of turn ***')
+    console.log('Shot this turn target -->', newTarget)
     console.log('outcome -->', aiTargetResult)
-    console.log('previous targets -->', aiPreviousTargets)
     console.log('player hits remaining -->', playerHitsRemaining)
-    console.log('cells to exclude -->', aiCellsToExclude)
-    console.log('potential ai targets -->', aiTargetCells)
+    console.log('player vessel hit this turn -->', hitPlayerVessel)
+    console.log('player vessel sunk this turn -->', sunkPlayerVessel)
     console.log('killmode -->', killMode)
-    console.log('ai hunt toggle -->', turnToggle)
-    console.log('aiTurn #', aiTurn)
+    console.log('toggle from within aiKill (should be 1) -->', turnToggle)
+    console.log('aiTurn number -->', aiTurn)
+    
+    console.log('** to be assigned **')
+    console.log('previous targets -->', aiPreviousTargets)
+    console.log('cells to exclude from targeting -->', aiCellsToExclude)
+    console.log('potential ai targets -->', aiTargetCells)
+    
+    
     turnCheck()
   }
 
@@ -1158,6 +1175,64 @@ function init() {
         playerMineHits -= 1
         hitPlayerVessel = 'minesweeper'
       }
+
+      // check if vessel sunk
+      // determines if anything sunk
+      if (playerCarrierHits === 0 && carrierSunk === 0) {
+        playerVesselsRemaining -= 1
+        killMode = false
+        sunkPlayerVessel = sunkPlayer[0]
+        console.log(`AI: I've sunk your ${sunkPlayer[0]}`)
+        killArray = []
+        shotsArray = []
+        aiTargetArray = []
+        carrierSunk += 1
+      }
+      if (playerBattleHits === 0 && battleSunk === 0) {
+        playerVesselsRemaining -= 1
+        killMode = false
+        sunkPlayerVessel = sunkPlayer[1]
+        console.log(`AI: I've sunk your ${sunkPlayer[1]}`)
+        killArray = []
+        shotsArray = []
+        aiTargetArray = []
+        battleSunk += 1
+      }
+      if (playerDestroyHits === 0 && destroySunk === 0) {
+        playerVesselsRemaining -= 1
+        killMode = false
+        sunkPlayerVessel = sunkPlayer[2]
+        console.log(`AI: I've sunk your ${sunkPlayer[2]}`)
+        killArray = []
+        shotsArray = []
+        aiTargetArray = []
+        destroySunk += 1
+      }
+      if (playerSubHits === 0 && subSunk === 0) {
+        playerVesselsRemaining -= 1
+        killMode = false
+        sunkPlayerVessel = sunkPlayer[3]
+        console.log(`AI: I've sunk your ${sunkPlayer[3]}`)
+        killArray = []
+        shotsArray = []
+        aiTargetArray = []
+        subSunk += 1
+      }
+      if (playerMineHits === 0 && mineSunk === 0) {
+        playerVesselsRemaining -= 1
+        killMode = false
+        sunkPlayerVessel = sunkPlayer[4]
+        console.log(`AI: I've sunk your ${sunkPlayer[4]}`)
+        killArray = []
+        shotsArray = []
+        aiTargetArray = []
+        mineSunk += 1
+      }
+
+      // call endGame function if winner
+      if (aiVesselsRemaining === 0) {
+        // *** endGame()
+      }
     
     } 
 
@@ -1191,6 +1266,7 @@ function init() {
     // Scenario 1: kill array has 1 item and last shot is hit, pick from 4 targets in targetArray
     if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
       
+      scn1Counter += 1
       // find the last cell with a hit
       const previousHit = killArray[killArray.length - 1]
 
@@ -1208,12 +1284,26 @@ function init() {
     // Scenario 2: kill array has 1 item and last shot is miss, filter last shot and pick from next 3 targets in targetArray, etc  
     if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetArray.length > 0) {
       
-      // filter last shot from aiTargetArray
-      const lastShot = shotsArray[shotsArray.length - 1]
-      const filteredArray = aiTargetArray.some(item => item === lastShot)
+      scn2Counter += 1
+      console.log('*** Enter scenario 2 ***')
+      console.log('** bug fixing ***')
 
+      // filter last shot from aiTargetArray
+      const lastShot = newTarget
+      const filteredArray = aiTargetArray.filter(item => item !== lastShot)
+      
+      console.log('previous targets -->', aiPreviousTargets)
+      console.log('outcome -->', aiTargetResult)
+      console.log('shot array -->', shotsArray)
+      console.log('kill array -->', killArray) 
+      console.log('ai target array', aiTargetArray)
+      console.log('lastShot ->', lastShot)
+      console.log('shotsArray ->', shotsArray)
+      console.log('shotsArray length ->', shotsArray.length)
+      console.log('filteredArray ->', filteredArray)
+      
       // random index
-      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+      const randomIndex = Math.floor(Math.random() * filteredArray.length)
 
       // update target array
       aiTargetArray = filteredArray  
@@ -1221,14 +1311,15 @@ function init() {
       // new target
       newTarget = aiTargetArray[randomIndex]
       
-      console.log('Enter scenario 2 (shot this turn not removed) -->', aiTargetArray)
-      console.log('Enter scenario 2 -->', newTarget)
+      
     
     } 
     
+    // *** KILL STAGE 2 (2 or more hits) ***
     // Scenario 3: kill array has 2 or more items and last shot is hit  
     if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
 
+      scn3Counter += 1
       // reset target array
       aiTargetArray = []
 
@@ -1271,16 +1362,27 @@ function init() {
     // Scenario 4: kill array has 2 or more items and last shot is miss
     if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
 
-      console.log('bug fixing ***')
+      scn4Counter += 1
+      
+      console.log('*** Enter scenario 4 ***')
+      console.log('*** bug fixing ***')
 
       // filter last shot from aiTargetArray
-      const lastShot = shotsArray[shotsArray.length - 1]
-      const filteredArray = aiTargetArray.some(item => item === lastShot)
+      const lastShot = newTarget
+      const filteredArray = aiTargetArray.filter(item => item !== lastShot)
+      
+      console.log('previous targets -->', aiPreviousTargets)
+      console.log('outcome -->', aiTargetResult)
+      console.log('shot array -->', shotsArray)
+      console.log('kill array -->', killArray) 
+      console.log('ai target array', aiTargetArray)
       console.log('lastShot ->', lastShot)
+      console.log('shotsArray ->', shotsArray)
+      console.log('shotsArray length ->', shotsArray.length)
       console.log('filteredArray ->', filteredArray)
 
       // random index
-      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+      const randomIndex = Math.floor(Math.random() * filteredArray.length)
 
       // update target array
       aiTargetArray = filteredArray  
@@ -1288,21 +1390,55 @@ function init() {
       // new target
       newTarget = aiTargetArray[randomIndex]
 
-      console.log('Enter scenario 4 (shot this turn not removed) -->', aiTargetArray)
-      console.log('Enter scenario 4 -->', newTarget)
+      
       
       
     } 
-    // Scenario 5: error handling
-    if (killArray.length >= 1 && aiTargetArray.length === 0) {
+    
 
-      console.log('Error 101')
-      // reset killArray and targetArray
+    // *** KILL STAGE 3 (handling other odd scenarios) ***
+    // Scenario 5: if 2 boats lie parallel to each other then possible to have got the orientation wrong. This would happen when kill array has 2 or more items and last 2 shots are misses. Future improvement to detect in this scenario and pick one of the hit cells and select the alternative orientation
+    // Scenario n: other error handling
+    if ( (killArray.length > 1 && aiTargetArray.length === 0) || (killArray.length > 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetResult[aiTargetResult.length - 2] === 'miss') ) {
+
+      scn5Counter += 1
+
+      console.log('Enter error handling')
+      console.log('*** bug fixing ***')
+
+      console.log('previous targets -->', aiPreviousTargets)
+      console.log('outcome -->', aiTargetResult)
+      console.log('shot array -->', shotsArray)
+      console.log('kill array -->', killArray) 
+      console.log('ai target array', aiTargetArray)
+      //console.log('lastShot ->', lastShot)
+      console.log('shotsArray ->', shotsArray)
+      console.log('shotsArray length ->', shotsArray.length)
+      //console.log('filteredArray ->', filteredArray)
+
+      // reset killArray, shotsArray and targetArray
       killArray = []
       aiTargetArray = []
+      shotsArray = []
       killMode = false
-      aiAttack() // back to hunt mode for these scenarios
+      aiKill() // back to hunt mode for these scenarios
     }
+
+    valCounter += 1
+    console.log('*** Enter validation post scenarios ***')
+    console.log('*** bug fixing ***')
+
+    console.log('previous targets -->', aiPreviousTargets)
+    console.log('outcome -->', aiTargetResult)
+    console.log('shot array -->', shotsArray)
+    console.log('kill array -->', killArray) 
+    console.log('ai target array', aiTargetArray)
+    console.log('new target ->', newTarget)
+    //console.log('lastShot ->', lastShot)
+    console.log('shotsArray ->', shotsArray)
+    console.log('shotsArray length ->', shotsArray.length)
+    //console.log('filteredArray ->', filteredArray)
+
 
     // validation - check cell is not in shots array, loop recursively if it is
     const restart = shotsArray.some(item => item === newTarget)
@@ -1312,10 +1448,15 @@ function init() {
       aiKill()
     }
 
+    
+
     // target element
     const targetDiv = gridArrayAiTargeting[newTarget]
-    console.log(newTarget)
-    console.log('target div', targetDiv)
+    
+    console.log('target', newTarget)
+    console.log('target element ->', targetDiv)
+    console.log('grid being targeted ->', gridArrayAiTargeting)
+    
     // console.log(previousTarget)
     // console.log(newTarget)
 
@@ -1331,18 +1472,37 @@ function init() {
     
     // *** AI STATS ***
     console.log('*** AI STATS ***')
-    console.log('outcome -->', aiTargetResult)
-    console.log('previous targets -->', aiPreviousTargets)
-    console.log('player hits remaining -->', playerHitsRemaining)
-    console.log('cells to exclude -->', aiCellsToExclude)
-    console.log('potential ai targets -->', aiTargetCells)
-    console.log('killmode -->', killMode)
-    console.log('ai hunt toggle -->', turnToggle)
-    console.log('aiTurn #', aiTurn)
+    
+    console.log('*** at start of turn ***')
     console.log('shot array -->', shotsArray)
-    console.log('Kill array -->', killArray) 
-    console.log('Target array (shot this turn not removed) -->', aiTargetArray)
+    console.log('kill array -->', killArray) 
+    console.log('target array -->', aiTargetArray)
+
+    console.log('*** at the end of turn ***')
     console.log('Shot this turn target -->', newTarget)
+    console.log('outcome -->', aiTargetResult)
+    console.log('player hits remaining -->', playerHitsRemaining)
+    console.log('player vessel hit this turn -->', hitPlayerVessel)
+    console.log('player vessel sunk this turn -->', sunkPlayerVessel)
+    console.log('killmode -->', killMode)
+    console.log('toggle from within aiKill (should be 1) -->', turnToggle)
+    console.log('aiTurn number -->', aiTurn)
+    
+    console.log('** to be assigned **')
+    console.log('previous targets -->', aiPreviousTargets)
+    console.log('cells to exclude from targeting -->', aiCellsToExclude)
+    console.log('potential ai targets -->', aiTargetCells)
+
+    console.log('*** scenario counters ***')
+    console.log(`scenario 1 -> ${scn1Counter}`)
+    console.log(`scenario 2 -> ${scn2Counter}`)
+    console.log(`scenario 3 -> ${scn3Counter}`)
+    console.log(`scenario 4 -> ${scn4Counter}`)
+    console.log(`scenario 5 -> ${scn5Counter}`)
+    console.log(`validation -> ${valCounter}`)
+    
+    
+
 
     turnCheck()
     
