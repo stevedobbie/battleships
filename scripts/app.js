@@ -112,7 +112,7 @@ function init() {
   const aiCellsToExclude = [] // this will store the cells which have been hit or missed
   let killMode = false 
   const shotsArray = []
-  const killArray = []
+  let killArray = []
   const aiPreviousTargets = []
   let killOrientation
   let aiTargetArray = []
@@ -964,7 +964,7 @@ function init() {
     if (killMode === false && turnToggle === 1) {
       aiHunt()
     }
-    if (killMode === true && shotsArray.length > 0 && turnToggle === 1) {
+    if (killMode === true && turnToggle === 1) {
       aiKill()
     }
     
@@ -1160,9 +1160,7 @@ function init() {
       }
     
     } 
-    if (result === true && killMode === true) {
-      shotsArray.push(target)
-    } 
+
     if (result === false) {
       outcome = 'miss'
       // console.log(outcome)
@@ -1205,127 +1203,123 @@ function init() {
       // new Target
       newTarget = aiTargetArray[randomIndex]
 
-      // validation - check cell is not in shots array, loop recursively if it is
-      const restart = shotsArray.some(item => item === newTarget)
-      console.log('restart KILLS STAGE 1 -->', restart)
-
-      if (restart === true || newTarget > cells - 1 || newTarget < 0) {
-        aiKill()
-      }
-
-      // target element
-      const targetDiv = gridArrayAiTargeting[newTarget]
-      console.log(newTarget)
-      console.log('target div', targetDiv)
-      // console.log(previousTarget)
-      // console.log(newTarget)
-
-      hitCheck(newTarget, targetDiv)
-      
-      
     } 
     
-    // Scenario 2: kill array has 1 item and last shot is miss, filter last shot and pick from next 3 targets in targetArray, etc
-    if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
+    // Scenario 2: kill array has 1 item and last shot is miss, filter last shot and pick from next 3 targets in targetArray, etc  
+    if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetArray.length > 0) {
       
       // filter last shot from aiTargetArray
+      const lastShot = shotsArray[shotsArray.length - 1]
+      const filteredArray = aiTargetArray.some(item => item === lastShot)
+
+      // random index
+      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+
+      // update target array
+      aiTargetArray = filteredArray  
+
+      // new target
+      newTarget = aiTargetArray[randomIndex]
       
-
-    }
-
-
+      console.log('Enter scenario 2 (shot this turn not removed) -->', aiTargetArray)
+      console.log('Enter scenario 2 -->', newTarget)
     
-    if (killArray.length === 2 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
+    } 
+    
+    // Scenario 3: kill array has 2 or more items and last shot is hit  
+    if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
+
+      // reset target array
+      aiTargetArray = []
 
       // determine orientation, if last value in kill array is +1 or -1 from previous value then horizontal
-      const previousTarget = killArray[shotsArray.length - 1]
-      const previousX2Target = killArray[shotsArray.length - 2]
-    
-      let targetHorzArray = []
-      let targetVertArray = []
+      const previousHit = killArray[shotsArray.length - 1]
+      const previousX2Hit = killArray[shotsArray.length - 2]
 
-      if (Math.abs(previousTarget - previousX2Target) === 0) {
-        killOrientation = 'horizontal'
-        targetHorzArray = [-1, +1]
-        console.log(targetArray)
-      } 
-      if (Math.abs(previousTarget - previousX2Target) === 10) {
-        killOrientation = 'vertical'
-        targetVertArray = [-10, +10]
-        console.log(targetArray)
-      }
-
-      // if horizontal, new target is smallest value -1 or largest value +1 in kill array
+      // if horizontal, new target is smallest value  -1 or largest value +1 in kill array
       // if vertical, new target is either smallest value -10 or largest value +10 
-      
+
       // order array lowest to highest
       const orderedKillArray = killArray.sort((a, b) => a - b)
       // console.log(orderedKillArray)
+
+      // random cell from ordered kill array (applies if array > 2)
+      const fltrOrdKillArray = [orderedKillArray[0],orderedKillArray[orderedKillArray.length - 1]]
       
-      // // random cell from ordered kill array (applies if array > 2)
-      // const fltrOrdKillArray = [orderedKillArray[0],orderedKillArray[orderedKillArray.length - 1]]
-      // console.log(fltrOrdKillArray)
+      // random index
+      const randomIndex = Math.floor(Math.random() * fltrOrdKillArray.length)
+
+      // horizontal if last two hits have absolute difference of +/- 1
+      if (Math.abs(previousHit - previousX2Hit) === 1) {
+        killOrientation = 'horizontal'
+        
+        // update target array to select -1 and +1 first and last cell in fltOrdKillArray
+        aiTargetArray = [fltrOrdKillArray[0] - 1, fltrOrdKillArray[fltrOrdKillArray.length - 1] + 1]
+        newTarget = aiTargetArray[randomIndex] // new target
+      } 
       
-      const rng = Math.floor(Math.random() * 2)
-      // console.log(rng)
+      // vertical if last two hits have absolute difference of +/- 10
+      if (Math.abs(previousHit - previousX2Hit) === 10) {
+        killOrientation = 'vertical'
+        
+        // update target array to select -10 and +10 first and last cell in fltOrdKillArray
+        aiTargetArray = [fltrOrdKillArray[0] - 10, fltrOrdKillArray[fltrOrdKillArray.length - 1] + 10]
+        newTarget = aiTargetArray[randomIndex] // new target
+      }
+    } 
+
+    // Scenario 4: kill array has 2 or more items and last shot is miss
+    if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
+
+      console.log('bug fixing ***')
+
+      // filter last shot from aiTargetArray
+      const lastShot = shotsArray[shotsArray.length - 1]
+      const filteredArray = aiTargetArray.some(item => item === lastShot)
+      console.log('lastShot ->', lastShot)
+      console.log('filteredArray ->', filteredArray)
+
+      // random index
+      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+
+      // update target array
+      aiTargetArray = filteredArray  
+
+      // new target
+      newTarget = aiTargetArray[randomIndex]
+
+      console.log('Enter scenario 4 (shot this turn not removed) -->', aiTargetArray)
+      console.log('Enter scenario 4 -->', newTarget)
       
-      let newTarget = 0
-      if (killOrientation === 'horizontal' && rng === 0) {
-        newTarget = targetHorzArray[0] + orderedKillArray[0]
-      }
-      if (killOrientation === 'horizontal' && rng === 1) {
-        newTarget = targetHorzArray[1] + orderedKillArray[1]
-      }
-      if (killOrientation === 'vertical' && rng === 0) {
-        newTarget = targetVertArray[0] + orderedKillArray[0]
-      }
-      if (killOrientation === 'vertical' && rng === 1) {
-        newTarget = targetVertArray[1] + orderedKillArray[1]
-      }
-
-      console.log('new target (2 hits) ->', newTarget)
-
-      // check new target cell is not in shots array, loop recursively if it is
-      const restart = shotsArray.some(item => item === newTarget)
-      console.log('restart 2 --->', restart)
-      if (restart === true || newTarget > cells - 1 || newTarget < 0) {
-        aiKill()
-      }
-
-      // target element
-      const targetDiv = gridArrayAiTargeting[newTarget]
-      console.log('target div', targetDiv)
-      // console.log(previousTarget)
-      // console.log(newTarget)
-
-
-
-      hitCheck(newTarget, targetDiv)
       
-      // this will be used for the ai's targeting - pushes in previous hits & misses
-      aiCellsToExclude.push(newTarget)
-      //console.log(aiCellsToExclude)
+    } 
+    // Scenario 5: error handling
+    if (killArray.length >= 1 && aiTargetArray.length === 0) {
 
-
-      // increment turn counters
-      aiTurn += 1
-      turnToggle -= 1
-
-      // *** AI STATS ***
-      console.log('*** AI STATS ***')
-      console.log('outcome -->', aiTargetResult)
-      console.log('previous targets -->', aiPreviousTargets)
-      console.log('player hits remaining -->', playerHitsRemaining)
-      console.log('cells to exclude -->', aiCellsToExclude)
-      console.log('potential ai targets -->', aiTargetCells)
-      console.log('killmode -->', killMode)
-      console.log('ai hunt toggle -->', turnToggle)
-      console.log('aiTurn #', aiTurn)
-      console.log('shot array -->', shotsArray)
-      console.log('kill array -->', killArray)  
-      
-      turnCheck()
+      console.log('Error 101')
+      // reset killArray and targetArray
+      killArray = []
+      aiTargetArray = []
+      killMode = false
+      aiAttack() // back to hunt mode for these scenarios
     }
+
+    // validation - check cell is not in shots array, loop recursively if it is
+    const restart = shotsArray.some(item => item === newTarget)
+    console.log('restart -->', restart)
+
+    if (restart === true || newTarget > cells - 1 || newTarget < 0) {
+      aiKill()
+    }
+
+    // target element
+    const targetDiv = gridArrayAiTargeting[newTarget]
+    console.log(newTarget)
+    console.log('target div', targetDiv)
+    // console.log(previousTarget)
+    // console.log(newTarget)
+
+    hitCheck(newTarget, targetDiv)
 
     // this will be used for the ai's targeting - pushes in previous hits & misses
     aiCellsToExclude.push(newTarget)
@@ -1346,9 +1340,9 @@ function init() {
     console.log('ai hunt toggle -->', turnToggle)
     console.log('aiTurn #', aiTurn)
     console.log('shot array -->', shotsArray)
-    console.log('kill array -->', killArray) 
-    console.log('target array -->', aiTargetArray)
-    console.log('new target -->', newTarget)
+    console.log('Kill array -->', killArray) 
+    console.log('Target array (shot this turn not removed) -->', aiTargetArray)
+    console.log('Shot this turn target -->', newTarget)
 
     turnCheck()
     
