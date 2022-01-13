@@ -1324,8 +1324,8 @@ function init() {
       aiTargetArray = []
 
       // determine orientation, if last value in kill array is +1 or -1 from previous value then horizontal
-      const previousHit = killArray[shotsArray.length - 1]
-      const previousX2Hit = killArray[shotsArray.length - 2]
+      const previousHit = killArray[killArray.length - 1]
+      const previousX2Hit = killArray[killArray.length - 2]
 
       // if horizontal, new target is smallest value  -1 or largest value +1 in kill array
       // if vertical, new target is either smallest value -10 or largest value +10 
@@ -1386,9 +1386,10 @@ function init() {
 
       // update target array
       aiTargetArray = filteredArray  
-
+      
       // new target
       newTarget = aiTargetArray[randomIndex]
+      console.log('selected shot ->', newTarget)
 
       
       
@@ -1399,8 +1400,8 @@ function init() {
     // *** KILL STAGE 3 (handling other odd scenarios) ***
     // Scenario 5: if 2 boats lie parallel to each other then possible to have got the orientation wrong. This would happen when kill array has 2 or more items and last 2 shots are misses. Future improvement to detect in this scenario and pick one of the hit cells and select the alternative orientation
     // Scenario n: other error handling
-    if ( (killArray.length > 1 && aiTargetArray.length === 0) || (killArray.length > 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetResult[aiTargetResult.length - 2] === 'miss') ) {
-
+    if ( (killArray.length > 1 && aiTargetArray.length === 0) ) {
+      // || (killArray.length > 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetResult[aiTargetResult.length - 2] === 'miss') 
       scn5Counter += 1
 
       console.log('Enter error handling')
@@ -1421,7 +1422,7 @@ function init() {
       aiTargetArray = []
       shotsArray = []
       killMode = false
-      aiKill() // back to hunt mode for these scenarios
+      aiAttack() // back to hunt mode for these scenarios
     }
 
     valCounter += 1
@@ -1441,11 +1442,11 @@ function init() {
 
 
     // validation - check cell is not in shots array, loop recursively if it is
-    const restart = shotsArray.some(item => item === newTarget)
+    const restart = aiPreviousTargets.some(item => item === newTarget)
     console.log('restart -->', restart)
 
     if (restart === true || newTarget > cells - 1 || newTarget < 0) {
-      aiKill()
+      aiAttack()
     }
 
     
@@ -1466,9 +1467,7 @@ function init() {
     aiCellsToExclude.push(newTarget)
     //console.log(aiCellsToExclude)
 
-    // increment turn counters
-    aiTurn += 1
-    turnToggle -= 1
+    
     
     // *** AI STATS ***
     console.log('*** AI STATS ***')
@@ -1501,7 +1500,9 @@ function init() {
     console.log(`scenario 5 -> ${scn5Counter}`)
     console.log(`validation -> ${valCounter}`)
     
-    
+    // increment turn counters
+    aiTurn += 1
+    turnToggle -= 1
 
 
     turnCheck()
