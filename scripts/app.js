@@ -162,17 +162,23 @@ function init() {
   let textPosition = 0
   let phraseIndex = 0
   const speed = 50 // milliseconds between each character
-  const messageArray = [
+  let ms
+  let messageArray = [
     'Howdy, would you like to play a game of battleships?', 
     'You really know how to turn me on. I will be a sport and you can place your vessels first',
     'Stop pushing my buttons',
-    `Oh bother, you sunk my carrier. I have ${aiVesselsRemaining} vessels remaining`,
-    `Drat, you sunk my battleship. I have ${aiVesselsRemaining} vessels remaining`,
-    `Lucky shot, you've sunk my destroyer. I have ${aiVesselsRemaining} vessels remaining`,
-    `Have you played this before? You've sunk my submarine. I have ${aiVesselsRemaining} vessels remaining`,
-    `My circuits are failing. You have sunk my minsweeper I have ${aiVesselsRemaining} vessels remaining`,
-    'I need to have a word with myself. If I was civil I would offer my congratulations',
-    'Humans are so slow... I placed my vessels in 143ms'
+    'Oh bother, you have sunk my carrier',
+    'Drat, you sunk my battleship',
+    'Lucky shot you sunk my destroyer',
+    'Have you played this games before? You sunk my submarine',
+    'My circuits are failing. You sunk my minsweeper.',
+    'Disappointing I need to have a word with myself',
+    `Humans are so slow... I placed my vessels in ${ms}`,
+    'A victory for artificial intelligence. I sunk your carrier',
+    'Practice makes perfect. I sunk your battleship',
+    'Haha I have destroyed your destroyer',
+    'Your submarine is sleeping with the fishes',
+    'Maybe you should play minesweeper instead? I just blew one up'
   ]
 
   // Event variables
@@ -567,6 +573,9 @@ function init() {
   // calls the moveVessel function
   function playerDeploy () {
     
+   
+
+
     textPosition = 0
     phraseIndex = [1]
     messages()
@@ -754,9 +763,14 @@ function init() {
           item += 1
         }   
       }
+      ms = Math.floor(Math.random() * 200)
+
+
       textPosition = 0
       phraseIndex = 9
+      messageArray[9] = `Humans are so slow... I placed my vessels in ${ms} ms` 
       messages()
+  
       index += 1
     }
 
@@ -1256,12 +1270,16 @@ function init() {
         playerVesselsRemaining -= 1
         killMode = false
         sunkPlayerVessel = sunkPlayer[0]
+        
         //console.log(`AI: I've sunk your ${sunkPlayer[0]}`)
         killArray = []
         shotsArray = []
         aiTargetArray = []
         playerCarrierSunk += 1
         killCounter = 0
+        textPosition = 0
+        phraseIndex = 10
+        messages()
       }
       if (playerBattleHits === 0 && playerBattleSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1273,6 +1291,9 @@ function init() {
         aiTargetArray = []
         playerBattleSunk += 1
         killCounter = 0
+        textPosition = 0
+        phraseIndex = 11
+        messages()
       }
       if (playerDestroyHits === 0 && playerDestroySunk === 0) {
         playerVesselsRemaining -= 1
@@ -1284,6 +1305,9 @@ function init() {
         aiTargetArray = []
         playerDestroySunk += 1
         killCounter = 0
+        textPosition = 0
+        phraseIndex = 12
+        messages()
       }
       if (playerSubHits === 0 && playerSubSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1295,6 +1319,9 @@ function init() {
         aiTargetArray = []
         playerSubSunk += 1
         killCounter = 0
+        textPosition = 0
+        phraseIndex = 13
+        messages()
       }
       if (playerMineHits === 0 && playerMineSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1306,6 +1333,9 @@ function init() {
         aiTargetArray = []
         playerMineSunk += 1
         killCounter = 0
+        textPosition = 0
+        phraseIndex = 14
+        messages()
       }
 
       // call endGame function if winner
