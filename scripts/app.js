@@ -2,6 +2,15 @@
 
 function init() {
   
+  // **** IMPROVEMENTS
+  // Refactor AI logic - fix repetitive hits and breakout into smaller functions
+  // Add logic for vessels at the edge of the grid (e.g. in column 9)
+  // Add visualisation of AI targeting and remove extra grid
+  // Refactor to resolve issue with vessel objects and include hit and sunk rather than additional variables for these
+  // Refactor to make more functions reusable
+  // Turn counts and player statistics
+  // Stronger AI - probabilistic simulation 
+  
   // GLOBAL VARIABLES
   
   // Grid variables
@@ -119,7 +128,7 @@ function init() {
   let targetGrid
   
   // ai play variables
-  let aiTargetCells = [] // cells to target after filtering for hits and misses
+  let aiAvailableCells = [] // cells to target after filtering for hits and misses
   const aiCellsToExclude = [] // this will store the cells which have been hit or missed
   let killMode = false 
   let shotsArray = []
@@ -964,8 +973,8 @@ function init() {
 
     playerTargetResult.push(outcome)
 
-    // add back listeners
-    addBackEventListeners()
+    
+    addBackEventListeners() // add back listeners
 
     // increment turn counters
     playerTurn += 1
@@ -977,19 +986,34 @@ function init() {
   
   function turnCheck () {
 
-    if (turnToggle === 0 && aiTurn === playerTurn) {
+    if (turnToggle === 0 && aiTurn >= playerTurn) {
+      addBackEventListeners()
+      targetSelection()
+    } else if (turnToggle === 1 && aiTurn < playerTurn) {
+      removeEventListeners()
+      aiAttack()
+    } else {
+      // failsafe back to player turn
+      turnToggle = 0
       addBackEventListeners()
       targetSelection()
     }
-    if (turnToggle === 1 && aiTurn < playerTurn) {
-      removeEventListeners()
-      aiAttack()
+  }
+
+
+  function updateTargetCells () {
+    
+    if (aiCellsToExclude.length > 0) {
+      for (let i = 0; i < aiCellsToExclude.length; i++) {
+        aiAvailableCells = aiSelectionArray.filter(item => item !== aiCellsToExclude[i])
+        aiSelectionArray = aiAvailableCells
+      }
+    } else {
+      aiAvailableCells = aiSelectionArray
     }
     
-    // failsafe back to player turn
-    turnToggle = 0
-    addBackEventListeners()
-    targetSelection()
+    console.log('CHECK -->', aiSelectionArray)
+    console.log('CHECK -->', aiCellsToExclude)
   }
 
   // logic for determine whether ai should hunt or kill
@@ -998,14 +1022,30 @@ function init() {
   // otherwise execute aiHunt()
   function aiAttack () {
 
-    huntGrid()
+    if (aiTurn === 0) {
+      huntGrid()
+    }
+
+    // call update grid func
+    if (aiTurn > 0 ){
+      updateTargetCells()
+      console.log('CHECK aiCellstoExclude Start of Turn-->', 'aiTurn ->',aiTurn, aiCellsToExclude)
+      console.log('CHECK aiTargetCells Start of Turn-->', aiAvailableCells)
+      console.log('CHECK aiPreviousTargets Start of Turn-->', aiPreviousTargets)
+    }
     
+
     if (killMode === false && turnToggle === 1) {
       aiHunt()
     }
     if (killMode === true && turnToggle === 1) {
       aiKill()
     }
+
+    // failsafe back to player turn
+    turnToggle = 0
+    addBackEventListeners()
+    targetSelection()
 
   }
   
@@ -1020,18 +1060,6 @@ function init() {
       aiSelectionArray.push(i)
     }
     
-    if (aiCellsToExclude.length > 0) {
-      for (let i = 0; i < aiCellsToExclude.length; i++) {
-        aiTargetCells = aiSelectionArray.filter(item => item !== aiCellsToExclude[i])
-        aiSelectionArray = aiTargetCells
-        ////console.log(aiTargetCells)
-      }
-    } else {
-      aiTargetCells = aiSelectionArray
-    }
-    
-    console.log('CHECK -->', aiSelectionArray)
-    console.log('CHECK -->', aiCellsToExclude)
   }
 
   
@@ -1054,13 +1082,13 @@ function init() {
   function aiHunt () {
     
     // select a random cell from aiTargetCells
-    const targetCell = Math.floor(Math.random() * aiTargetCells.length)
+    const targetCell = Math.floor(Math.random() * aiAvailableCells.length)
     
     // validation of targetCell
     const restart = aiCellsToExclude.some(item => item === targetCell)
     //console.log('restart --->', restart)
     if (restart === true) {
-      aiAttack()
+      turnCheck()
     }
 
     // *** TO BE CHANGED TO RUN THE GAME 
@@ -1106,7 +1134,7 @@ function init() {
     // *** AI STATS ***
     console.log('*** AI STATS ***')
     console.log('aiTurn number -->', aiTurn, 'playerTurn number -->', playerTurn)
-    console.log('toggle from within aiKill (should be 1 if in kill mode) -->', turnToggle, 'killmode ->', killMode)
+    console.log('toggle from within aiHunt (should be 0 as reset for player) -->', turnToggle, 'killmode ->', killMode)
     console.log('how many turns in kill mode', killCounter)
     console.log('shot array -->', shotsArray)
     console.log('kill array -->', killArray) 
@@ -1115,7 +1143,7 @@ function init() {
     console.log('outcome -->', aiTargetResult)
     console.log('previous targets -->', aiPreviousTargets)
     console.log('cells to exclude from targeting -->', aiCellsToExclude)
-    console.log('potential ai targets -->', aiTargetCells)
+    console.log('potential ai targets -->', aiAvailableCells)
     console.log('player hits remaining -->', playerHitsRemaining)
     console.log('*** scenario counters ***')
     console.log(`scenario 1 -> ${scn1Counter}`)
@@ -1257,8 +1285,43 @@ function init() {
     aiTargetResult.push(outcome)
   }
   
-  function aiKill1 () {
+  function validateTargets (aiTargetArray) { 
+    
+    // validate values to filter if any values are < 0 && > 99
+    const updateArray = aiTargetArray.filter(item => item !== item < 0 || item !== item > 99)
+    aiTargetArray = updateArray
+    
+    // filter any array values not in aiAvailableCells
+    const checkShot = aiAvailableCells.filter(item => aiTargetArray.indexOf(item) > -1)
+    
+    aiTargetArray = checkShot
+  }
 
+  function aiKillOne () {
+    
+    aiTargetArray = [0, 0] // reset target array
+
+    scn1Counter += 1
+    
+    const previousHit = killArray[killArray.length - 1] // find the last cell with a hit
+
+    // options are +1, -1, +10, -10 around cell
+    aiTargetArray = [previousHit + 1, previousHit - 1, previousHit + 10, previousHit - 10]
+    console.log('Scn1: Target array before validation -->', aiTargetArray)
+
+    validateTargets(aiTargetArray)    
+    
+    // random index
+    const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
+    
+    // new Target
+    newTarget = aiTargetArray[randomIndex]
+    console.log('Scn1: Target array after validation -->', aiTargetArray, 'target value -->', newTarget)
+
+    // validating cells to exclude
+    avoidCells.push(newTarget)
+    choosefromCells = aiSelectionArray.filter(item => item !== newTarget)
+    console.log('Scn1: choosefromCells -->', choosefromCells)
   }
 
   // select random adjacent cell based on hitCell array
@@ -1269,9 +1332,7 @@ function init() {
   // call sunk()
   function aiKill () {
 
-    console.log('CHECK aiCellstoExclude Start of Turn-->', aiCellsToExclude)
-    console.log('CHECK aiTargetCells Start of Turn-->', aiTargetCells)
-    console.log('CHECK aiPreviousTargets Start of Turn-->', aiPreviousTargets)
+    killCounter += 1
 
     console.log('*** AI STATS ***')
 
@@ -1281,41 +1342,7 @@ function init() {
       
       console.log('Killmode scenario -> scenario 1')
 
-      aiTargetArray = [0, 0] // reset target array
-
-      scn1Counter += 1
-      killCounter += 1
-      // find the last cell with a hit
-      const previousHit = killArray[killArray.length - 1]
-
-      // options are +1, -1, +10, -10 around cell
-      aiTargetArray = [previousHit + 1, previousHit - 1, previousHit + 10, previousHit - 10]
-      console.log('Scn1: Target array before validation -->', aiTargetArray)
-
-      // validate values to filter if any values are < 0 && > 99
-      const updateArray = aiTargetArray.filter(item => item !== item < 0 || item !== item > 99)
-      aiTargetArray = updateArray
-      
-      // validate to check value is not a previous shot
-      const checkShot = aiPreviousTargets.some(item => item === newTarget)
-
-      // error handling
-      if (checkShot === true) {
-        const randomShot = Math.floor(Math.random() * aiTargetCells.length)
-        newTarget = aiTargetCells[randomShot]
-      }
-
-      // random index
-      const randomIndex = Math.floor(Math.random() * aiTargetArray.length)
-      
-      // new Target
-      newTarget = aiTargetArray[randomIndex]
-      console.log('Scn1: Target array after validation -->', aiTargetArray, 'target value -->', newTarget)
-
-      // validating cells to exclude
-      avoidCells.push(newTarget)
-      choosefromCells = aiSelectionArray.filter(item => item !== newTarget)
-      console.log('Scn1: choosefromCells -->', choosefromCells)
+      aiKillOne()      
 
     } 
     
@@ -1443,9 +1470,9 @@ function init() {
       console.log('Killmode scenario -> enter error handling')
 
       // choose random cell from remaining array
-      const randomShot = Math.floor(Math.random() * aiTargetCells.length)
+      const randomShot = Math.floor(Math.random() * aiAvailableCells.length)
 
-      newTarget = aiTargetCells[randomShot]
+      newTarget = aiAvailableCells[randomShot]
 
       // reset killArray, shotsArray and targetArray
       killArray = []
@@ -1462,7 +1489,7 @@ function init() {
     //console.log('restart -->', restart)
 
     if (restart === true || newTarget > cells - 1 || newTarget < 0) {
-      aiKill()
+      turnCheck()
     }
 
     // target element
@@ -1480,7 +1507,7 @@ function init() {
     // *** AI STATS ***
     
     console.log('aiTurn number -->', aiTurn, 'playerTurn number -->', playerTurn)
-    console.log('toggle from within aiKill (should be 1 if in kill mode) -->', turnToggle, 'killmode ->', killMode)
+    console.log('toggle from within aiKill (should be 0 as reset for player) -->', turnToggle, 'killmode ->', killMode)
     console.log('how many turns in kill mode', killCounter)
     console.log('shot array -->', shotsArray)
     console.log('kill array -->', killArray) 
@@ -1489,7 +1516,7 @@ function init() {
     console.log('outcome -->', aiTargetResult)
     console.log('previous targets -->', aiPreviousTargets)
     console.log('cells to exclude from targeting -->', aiCellsToExclude)
-    console.log('potential ai targets -->', aiTargetCells)
+    console.log('potential ai targets -->', aiAvailableCells)
     console.log('player hits remaining -->', playerHitsRemaining)
     console.log('*** scenario counters ***')
     console.log(`scenario 1 -> ${scn1Counter}`)
