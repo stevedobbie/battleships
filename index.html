@@ -3,16 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Battleship</title>
+    <title>Battleships</title>
     <link rel="stylesheet" type="text/css" href="styles/main.css">
     <script src="scripts/app.js"></script>
   </head>
   <body>
     <div id="top"></div>
-    <div id="bottom"></div>
+    <div id="bottom"><img id="image" src="images/background.png"></div>
     <main id="game-container">
       <header>
-        <button id="rotate">Rotate<br>Vessel</button>
+        <button id="start">Start</button>
+        <button id="rotate">Rotate</button>
+        <div id="messages"></div>
       </header>
       <div class="grid-container playerTargetingGrid"></div>
       <div class="grid-container aiTargetingGrid"></div>
