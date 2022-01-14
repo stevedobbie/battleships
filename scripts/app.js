@@ -123,6 +123,7 @@ function init() {
   let killOrientation
   let aiTargetArray = []
   let newTarget
+  let killCounter = 0
 
   let scn1Counter = 0
   let scn2Counter = 0
@@ -1187,6 +1188,7 @@ function init() {
         shotsArray = []
         aiTargetArray = []
         carrierSunk += 1
+        killCounter = 0
       }
       if (playerBattleHits === 0 && battleSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1197,6 +1199,7 @@ function init() {
         shotsArray = []
         aiTargetArray = []
         battleSunk += 1
+        killCounter = 0
       }
       if (playerDestroyHits === 0 && destroySunk === 0) {
         playerVesselsRemaining -= 1
@@ -1207,6 +1210,7 @@ function init() {
         shotsArray = []
         aiTargetArray = []
         destroySunk += 1
+        killCounter = 0
       }
       if (playerSubHits === 0 && subSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1217,6 +1221,7 @@ function init() {
         shotsArray = []
         aiTargetArray = []
         subSunk += 1
+        killCounter = 0
       }
       if (playerMineHits === 0 && mineSunk === 0) {
         playerVesselsRemaining -= 1
@@ -1227,6 +1232,7 @@ function init() {
         shotsArray = []
         aiTargetArray = []
         mineSunk += 1
+        killCounter = 0
       }
 
       // call endGame function if winner
@@ -1267,6 +1273,7 @@ function init() {
     if (killArray.length === 1 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
       
       scn1Counter += 1
+      killCounter += 1
       // find the last cell with a hit
       const previousHit = killArray[killArray.length - 1]
 
@@ -1320,6 +1327,7 @@ function init() {
     if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'hit') {
 
       scn3Counter += 1
+      killCounter += 1
       // reset target array
       aiTargetArray = []
 
@@ -1330,32 +1338,30 @@ function init() {
       // if horizontal, new target is smallest value  -1 or largest value +1 in kill array
       // if vertical, new target is either smallest value -10 or largest value +10 
 
-      // order array lowest to highest
-      const orderedKillArray = killArray.sort((a, b) => a - b)
-      // console.log(orderedKillArray)
-
-      // random cell from ordered kill array (applies if array > 2)
-      const fltrOrdKillArray = [orderedKillArray[0],orderedKillArray[orderedKillArray.length - 1]]
+      // determine kill array length
+      const length = killArray.length
       
-      // random index
-      const randomIndex = Math.floor(Math.random() * fltrOrdKillArray.length)
-
-      // horizontal if last two hits have absolute difference of +/- 1
-      if (Math.abs(previousHit - previousX2Hit) === 1) {
-        killOrientation = 'horizontal'
-        
-        // update target array to select -1 and +1 first and last cell in fltOrdKillArray
-        aiTargetArray = [fltrOrdKillArray[0] - 1, fltrOrdKillArray[fltrOrdKillArray.length - 1] + 1]
-        newTarget = aiTargetArray[randomIndex] // new target
-      } 
+      // array is aligned horizontally and last hit is smaller
+      if (Math.abs(previousHit - previousX2Hit) === 1 && previousHit < previousX2Hit) {
+        aiTargetArray = [previousHit - 1, previousHit + length * 1]
+        newTarget = aiTargetArray[0]
+      }
+      // array is aligned horizontally and last hit is larger
+      if (Math.abs(previousHit - previousX2Hit) === 1 && previousHit > previousX2Hit) {
+        aiTargetArray = [previousHit + 1, previousHit - length * 1]
+        newTarget = aiTargetArray[0]
+      }
+      // array is aligned vertically and last hit is smallest
+      if (Math.abs(previousHit - previousX2Hit) === 10 && previousHit < previousX2Hit) {
+        // select previousHit, generate array and target
+        aiTargetArray = [previousHit - 10, previousHit + length * 10]
+        newTarget = aiTargetArray[0]
+      }
       
-      // vertical if last two hits have absolute difference of +/- 10
-      if (Math.abs(previousHit - previousX2Hit) === 10) {
-        killOrientation = 'vertical'
-        
-        // update target array to select -10 and +10 first and last cell in fltOrdKillArray
-        aiTargetArray = [fltrOrdKillArray[0] - 10, fltrOrdKillArray[fltrOrdKillArray.length - 1] + 10]
-        newTarget = aiTargetArray[randomIndex] // new target
+      // array is aligned vertically and last hit is larger
+      if (Math.abs(previousHit - previousX2Hit) === 10 && previousHit > previousX2Hit) {
+        aiTargetArray = [previousHit + 10, previousHit - length * 10]
+        newTarget = aiTargetArray[0]
       }
     } 
 
@@ -1363,6 +1369,7 @@ function init() {
     if (killArray.length >= 2 && aiTargetResult[aiTargetResult.length - 1] === 'miss') {
 
       scn4Counter += 1
+      killCounter += 1
       
       console.log('*** Enter scenario 4 ***')
       console.log('*** bug fixing ***')
@@ -1400,9 +1407,10 @@ function init() {
     // *** KILL STAGE 3 (handling other odd scenarios) ***
     // Scenario 5: if 2 boats lie parallel to each other then possible to have got the orientation wrong. This would happen when kill array has 2 or more items and last 2 shots are misses. Future improvement to detect in this scenario and pick one of the hit cells and select the alternative orientation
     // Scenario n: other error handling
-    if ( (killArray.length > 1 && aiTargetArray.length === 0) ) {
+    if ( (killArray.length > 1 && aiTargetArray.length === 0) || killCounter > 3) {
       // || (killArray.length > 1 && aiTargetResult[aiTargetResult.length - 1] === 'miss' && aiTargetResult[aiTargetResult.length - 2] === 'miss') 
       scn5Counter += 1
+      killCounter += 1
 
       console.log('Enter error handling')
       console.log('*** bug fixing ***')
@@ -1422,6 +1430,7 @@ function init() {
       aiTargetArray = []
       shotsArray = []
       killMode = false
+      killCounter = 0
       aiAttack() // back to hunt mode for these scenarios
     }
 
@@ -1446,7 +1455,7 @@ function init() {
     console.log('restart -->', restart)
 
     if (restart === true || newTarget > cells - 1 || newTarget < 0) {
-      aiAttack()
+      aiKill()
     }
 
     
@@ -1484,7 +1493,7 @@ function init() {
     console.log('player vessel hit this turn -->', hitPlayerVessel)
     console.log('player vessel sunk this turn -->', sunkPlayerVessel)
     console.log('killmode -->', killMode)
-    console.log('toggle from within aiKill (should be 1) -->', turnToggle)
+    console.log('toggle from within aiKill (should be 1 if in kill mode) -->', turnToggle, 'killmode ->', killMode)
     console.log('aiTurn number -->', aiTurn)
     
     console.log('** to be assigned **')
