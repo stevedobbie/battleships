@@ -1,2 +1,2 @@
 # battleships
-Battleships game with sophisticated AI coded in JavaScript
+Battleships game with AI coded in JavaScript
